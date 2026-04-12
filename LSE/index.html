@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>De Voz a Lenguaje de Signos</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --text-dark: #1a2530;
+            --accent: #34495e;
+            --font-heading: 'DM Serif Display', serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: #ffffff;
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Efecto Mancha de Acuarela */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -150px;
+            left: -150px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(162,217,255,0.4) 0%, rgba(255,255,255,0) 70%);
+            filter: blur(50px);
+            z-index: -1;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            right: -150px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255,194,224,0.4) 0%, rgba(255,255,255,0) 70%);
+            filter: blur(50px);
+            z-index: -1;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        h1 {
+            font-family: var(--font-heading);
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 400;
+            color: var(--text-dark);
+        }
+
+        #video-viewport {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        video { width: 100%; height: 100%; object-fit: cover; }
+
+        #transcript-area {
+            font-style: italic;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            min-height: 20px;
+        }
+
+        #start-btn {
+            background: none;
+            border: 1.5px solid var(--text-dark);
+            color: var(--text-dark);
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #start-btn:hover {
+            background: var(--text-dark);
+            color: white;
+        }
+
+        .lse-attribution {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>De Voz a Signos</h1>
+        <div id="video-viewport">
+            <video id="lse-video" playsinline muted></video>
+        </div>
+        <div id="transcript-area">Toca para hablar</div>
+        <button id="start-btn" onclick="startRecognition()">Hablar</button>
+    </div>
+    <div class="lse-attribution">Lenguaje de Signos Español</div>
+
+    <script>
+        const videoPlayer = document.getElementById('lse-video');
+        const transcriptArea = document.getElementById('transcript-area');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        function startRecognition() {
+            if (!SpeechRecognition) return alert("Navegador no compatible");
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.onstart = () => transcriptArea.innerText = "Escuchando...";
+            recognition.onresult = (e) => {
+                const text = e.results[0][0].transcript.toLowerCase().trim();
+                transcriptArea.innerText = text;
+                process(text);
+            };
+            recognition.start();
+        }
+
+        async function process(text) {
+            const words = ["hola", "adios", "gracias"];
+            if (words.includes(text)) {
+                await play(`videos/${text}.mov`);
+            } else {
+                for (let l of text.replace(/\s/g, "").split("")) {
+                    await play(`videos/${l}.mov`);
+                }
+            }
+        }
+
+        function play(src) {
+            return new Promise(res => {
+                videoPlayer.src = src;
+                videoPlayer.onended = res;
+                videoPlayer.onerror = res;
+                videoPlayer.play().catch(res);
+            });
+        }
+    </script>
+</body>
+</html>
