@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor LSE</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'DM Serif Display', serif; background: #ffffff; position: relative; overflow: hidden;
+        }
+        /* Manchas de acuarela suaves */
+        body::before {
+            content: ''; position: absolute; top: -10%; left: -10%; width: 60%; height: 60%;
+            background: radial-gradient(circle, rgba(162,217,255,0.2) 0%, transparent 70%); filter: blur(50px); z-index: -1;
+        }
+        body::after {
+            content: ''; position: absolute; bottom: -10%; right: -10%; width: 60%; height: 60%;
+            background: radial-gradient(circle, rgba(255,194,224,0.2) 0%, transparent 70%); filter: blur(50px); z-index: -1;
+        }
+        h1 { color: #2c3e50; font-size: 2.8rem; margin-bottom: 20px; letter-spacing: 1px; }
+        #video-viewport { 
+            width: 320px; height: 320px; background: #fff; border-radius: 30px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05); overflow: hidden; 
+            margin-bottom: 30px; border: 1px solid rgba(238,238,238,0.5);
+        }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        #transcript-area { margin-bottom: 25px; color: #95a5a6; font-size: 1.1rem; min-height: 1.5em; font-family: sans-serif; }
+        #start-btn {
+            background: #2c3e50; border: none; color: white; padding: 15px 40px;
+            border-radius: 50px; cursor: pointer; letter-spacing: 2px; 
+            text-transform: uppercase; font-size: 0.9
