@@ -4,30 +4,113 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traductor LSE</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
     <style>
         body {
-            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-family: 'DM Serif Display', serif; background: #ffffff; position: relative; overflow: hidden;
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; background: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; position: relative; overflow: hidden;
         }
-        /* Manchas de acuarela suaves */
+        /* Fondo de acuarela corregido para que no tape el texto */
         body::before {
-            content: ''; position: absolute; top: -10%; left: -10%; width: 60%; height: 60%;
-            background: radial-gradient(circle, rgba(162,217,255,0.2) 0%, transparent 70%); filter: blur(50px); z-index: -1;
+            content: ''; position: absolute; top: -5%; left: -5%; width: 50%; height: 50%;
+            background: radial-gradient(circle, rgba(162,217,255,0.5) 0%, transparent 70%); filter: blur(40px); z-index: -1;
         }
         body::after {
-            content: ''; position: absolute; bottom: -10%; right: -10%; width: 60%; height: 60%;
-            background: radial-gradient(circle, rgba(255,194,224,0.2) 0%, transparent 70%); filter: blur(50px); z-index: -1;
+            content: ''; position: absolute; bottom: -5%; right: -5%; width: 50%; height: 50%;
+            background: radial-gradient(circle, rgba(255,194,224,0.5) 0%, transparent 70%); filter: blur(40px); z-index: -1;
         }
-        h1 { color: #2c3e50; font-size: 2.8rem; margin-bottom: 20px; letter-spacing: 1px; }
+        /* Texto en negro puro para máxima visibilidad */
+        h1 { color: #000000; font-size: 2.5rem; margin-bottom: 5px; font-weight: 800; }
+        .subtitle { color: #333333; font-size: 1.1rem; margin-bottom: 25px; font-style: italic; }
+
         #video-viewport { 
-            width: 320px; height: 320px; background: #fff; border-radius: 30px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.05); overflow: hidden; 
-            margin-bottom: 30px; border: 1px solid rgba(238,238,238,0.5);
+            width: 320px; height: 320px; background: #000; border-radius: 25px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; 
+            margin-bottom: 20px; border: 3px solid #eeeeee;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
-        #transcript-area { margin-bottom: 25px; color: #95a5a6; font-size: 1.1rem; min-height: 1.5em; font-family: sans-serif; }
+        
+        #transcript-area { 
+            color: #000000; font-size: 1.4rem; font-weight: bold;
+            margin-bottom: 30px; text-align: center; min-height: 1.5em; width: 90%;
+        }
+        
         #start-btn {
-            background: #2c3e50; border: none; color: white; padding: 15px 40px;
-            border-radius: 50px; cursor: pointer; letter-spacing: 2px; 
-            text-transform: uppercase; font-size: 0.9
+            background: #1a252f; color: white; border: none; padding: 18px 45px;
+            border-radius: 50px; cursor: pointer; font-size: 1.1rem; font-weight: bold;
+            letter-spacing: 1px; box-shadow: 0 8px 15px rgba(0,0,0,0.3); transition: 0.3s;
+        }
+        #start-btn:hover { background: #000000; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <h1>De Voz a Signos</h1>
+    <div class="subtitle">Traductor LSE Personalizado</div>
+    
+    <div id="video-viewport">
+        <video id="lse-video" playsinline muted></video>
+    </div>
+
+    <div id="transcript-area">Toca el botón para empezar</div>
+
+    <button id="start-btn" onclick="startRecognition()">HABLAR AHORA</button>
+
+    <script>
+        const videoPlayer = document.getElementById('lse-video');
+        const transcriptArea = document.getElementById('transcript-area');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        function startRecognition() {
+            if (!SpeechRecognition) {
+                alert("Tu navegador no es compatible. Usa Google Chrome.");
+                return;
+            }
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.onstart = () => {
+                transcriptArea.innerText = "Escuchando...";
+            };
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript.toLowerCase().trim();
+                transcriptArea.innerText = 'Has dicho: "' + text + '"';
+                processText(text);
+            };
+            recognition.onerror = () => {
+                transcriptArea.innerText = "Error al escuchar. Inténtalo de nuevo.";
+            };
+            recognition.start();
+        }
+
+        async function processText(text) {
+            // Palabras completas grabadas
+            const palabras = ["hola", "adios", "gracias"];
+            
+            if (palabras.includes(text)) {
+                await playVideo(`LSE/${text}.mov`);
+            } else {
+                // Deletreo letra a letra
+                const letras = text.replace(/\s/g, "").split("");
+                for (let letra of letras) {
+                    await playVideo(`LSE/${letra}.mov`);
+                }
+            }
+        }
+
+        function playVideo(src) {
+            return new Promise((resolve) => {
+                videoPlayer.src = src;
+                videoPlayer.onended = resolve;
+                videoPlayer.onerror = () => {
+                    console.log("No existe el video para esta letra/palabra.");
+                    resolve();
+                };
+                videoPlayer.play().catch(err => {
+                    console.log("Error de reproducción");
+                    resolve();
+                });
+            });
+        }
+    </script>
+</body>
+</html>
