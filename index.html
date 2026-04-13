@@ -1,116 +1,31 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traductor LSE</title>
-    <style>
-        body {
-            margin: 0; min-height: 100vh; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; background: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; position: relative; overflow: hidden;
-        }
-        /* Fondo de acuarela corregido para que no tape el texto */
-        body::before {
-            content: ''; position: absolute; top: -5%; left: -5%; width: 50%; height: 50%;
-            background: radial-gradient(circle, rgba(162,217,255,0.5) 0%, transparent 70%); filter: blur(40px); z-index: -1;
-        }
-        body::after {
-            content: ''; position: absolute; bottom: -5%; right: -5%; width: 50%; height: 50%;
-            background: radial-gradient(circle, rgba(255,194,224,0.5) 0%, transparent 70%); filter: blur(40px); z-index: -1;
-        }
-        /* Texto en negro puro para máxima visibilidad */
-        h1 { color: #000000; font-size: 2.5rem; margin-bottom: 5px; font-weight: 800; }
-        .subtitle { color: #333333; font-size: 1.1rem; margin-bottom: 25px; font-style: italic; }
-
-        #video-viewport { 
-            width: 320px; height: 320px; background: #000; border-radius: 25px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; 
-            margin-bottom: 20px; border: 3px solid #eeeeee;
-        }
-        video { width: 100%; height: 100%; object-fit: cover; }
+async function processText(text) {
+        // Palabras completas
+        const palabrasGrabadas = ["hola", "adios", "gracias"];
         
-        #transcript-area { 
-            color: #000000; font-size: 1.4rem; font-weight: bold;
-            margin-bottom: 30px; text-align: center; min-height: 1.5em; width: 90%;
-        }
-        
-        #start-btn {
-            background: #1a252f; color: white; border: none; padding: 18px 45px;
-            border-radius: 50px; cursor: pointer; font-size: 1.1rem; font-weight: bold;
-            letter-spacing: 1px; box-shadow: 0 8px 15px rgba(0,0,0,0.3); transition: 0.3s;
-        }
-        #start-btn:hover { background: #000000; transform: scale(1.05); }
-    </style>
-</head>
-<body>
-
-    <h1>De Voz a Signos</h1>
-    <div class="subtitle">Traductor LSE Personalizado</div>
-    
-    <div id="video-viewport">
-        <video id="lse-video" playsinline muted></video>
-    </div>
-
-    <div id="transcript-area">Toca el botón para empezar</div>
-
-    <button id="start-btn" onclick="startRecognition()">HABLAR AHORA</button>
-
-    <script>
-        const videoPlayer = document.getElementById('lse-video');
-        const transcriptArea = document.getElementById('transcript-area');
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        function startRecognition() {
-            if (!SpeechRecognition) {
-                alert("Tu navegador no es compatible. Usa Google Chrome.");
-                return;
-            }
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'es-ES';
-            recognition.onstart = () => {
-                transcriptArea.innerText = "Escuchando...";
-            };
-            recognition.onresult = (event) => {
-                const text = event.results[0][0].transcript.toLowerCase().trim();
-                transcriptArea.innerText = 'Has dicho: "' + text + '"';
-                processText(text);
-            };
-            recognition.onerror = () => {
-                transcriptArea.innerText = "Error al escuchar. Inténtalo de nuevo.";
-            };
-            recognition.start();
-        }
-
-        async function processText(text) {
-            // Palabras completas grabadas
-            const palabras = ["hola", "adios", "gracias"];
-            
-            if (palabras.includes(text)) {
-                await playVideo(`LSE/${text}.mov`);
-            } else {
-                // Deletreo letra a letra
-                const letras = text.replace(/\s/g, "").split("");
-                for (let letra of letras) {
-                    await playVideo(`LSE/${letra}.mov`);
-                }
+        if (palabrasGrabadas.includes(text)) {
+            // AHORA BUSCA EN: LSE -> videos -> archivo.mov
+            await playVideo(`LSE/videos/${text}.mov`);
+        } else {
+            // Letra a letra
+            const letras = text.replace(/\s/g, "").split("");
+            for (let letra of letras) {
+                await playVideo(`LSE/videos/${letra}.mov`);
             }
         }
+    }
 
-        function playVideo(src) {
-            return new Promise((resolve) => {
-                videoPlayer.src = src;
-                videoPlayer.onended = resolve;
-                videoPlayer.onerror = () => {
-                    console.log("No existe el video para esta letra/palabra.");
-                    resolve();
-                };
-                videoPlayer.play().catch(err => {
-                    console.log("Error de reproducción");
-                    resolve();
-                });
+    function playVideo(src) {
+        return new Promise((resolve) => {
+            const videoPlayer = document.getElementById('lse-video');
+            videoPlayer.src = src;
+            videoPlayer.onended = resolve;
+            videoPlayer.onerror = () => {
+                console.error("No se encuentra en: ", src);
+                resolve(); 
+            };
+            videoPlayer.play().catch(err => {
+                console.error("Error:", err);
+                resolve();
             });
-        }
-    </script>
-</body>
-</html>
+        });
+    }
