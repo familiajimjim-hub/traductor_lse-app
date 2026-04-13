@@ -11,46 +11,46 @@
             align-items: center; justify-content: center; background: #ffffff;
             font-family: 'DM Serif Display', serif; position: relative; overflow: hidden;
         }
-        /* ESTÉTICA DE ACUARELAS */
+        /* ACUARELAS DE FONDO */
         body::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 10% 10%, rgba(162,217,255,0.4), transparent 40%),
-                        radial-gradient(circle at 90% 90%, rgba(255,194,224,0.4), transparent 40%);
+            background: radial-gradient(circle at 10% 10%, rgba(162,217,255,0.4), transparent 45%),
+                        radial-gradient(circle at 90% 90%, rgba(255,194,224,0.4), transparent 45%);
             z-index: -1;
         }
         
-        h1 { color: #1a252f; font-size: 2.8rem; margin: 10px 0; font-weight: bold; }
-        .subtitle { color: #333333; font-size: 1.1rem; margin-bottom: 25px; font-style: italic; font-family: sans-serif; }
+        h1 { color: #1a252f; font-size: 3rem; margin: 10px 0; font-weight: bold; }
+        .subtitle { color: #444; font-size: 1.1rem; margin-bottom: 25px; font-style: italic; font-family: sans-serif; }
 
         #video-viewport { 
-            width: 320px; height: 320px; background: #000; border-radius: 25px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; 
-            margin-bottom: 20px; border: 4px solid #fff;
+            width: 320px; height: 320px; background: #000; border-radius: 30px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3); overflow: hidden; 
+            margin-bottom: 20px; border: 5px solid #fff;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         
         #transcript-area { 
-            color: #000; font-size: 1.4rem; font-weight: bold; font-family: sans-serif;
+            color: #1a252f; font-size: 1.4rem; font-weight: bold; font-family: sans-serif;
             margin-bottom: 30px; text-align: center; min-height: 1.5em; width: 85%;
         }
         
-        /* BOTÓN DE CONTROL */
+        /* BOTÓN DINÁMICO */
         #main-btn {
-            background: #2c3e50; color: white; border: none; padding: 18px 45px;
-            border-radius: 50px; cursor: pointer; font-size: 1.1rem; font-weight: bold;
-            letter-spacing: 1px; box-shadow: 0 8px 15px rgba(0,0,0,0.3); transition: 0.3s;
-            font-family: sans-serif;
+            background: #2c3e50; color: white; border: none; padding: 20px 55px;
+            border-radius: 50px; cursor: pointer; font-size: 1.2rem; font-weight: bold;
+            letter-spacing: 1px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s;
+            font-family: sans-serif; z-index: 20;
         }
-        #main-btn.recording { background: #c0392b; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+        #main-btn.recording { background: #e74c3c; transform: scale(1.05); }
+        #main-btn:active { transform: scale(0.95); }
 
         /* LOGOS EN LAS ESQUINAS */
         .corner-logo {
-            position: absolute; bottom: 20px; width: 80px; height: auto;
-            object-fit: contain; z-index: 10; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));
+            position: absolute; bottom: 25px; width: 90px; height: 90px;
+            object-fit: contain; z-index: 10;
         }
-        .left-logo { left: 20px; } /* Logo LSE (2.png) */
-        .right-logo { right: 20px; } /* Logo Colegio (1.png) */
+        .left-logo { left: 25px; } 
+        .right-logo { right: 25px; }
     </style>
 </head>
 <body>
@@ -62,7 +62,7 @@
         <video id="lse-video" playsinline muted></video>
     </div>
 
-    <div id="transcript-area">Toca para traducir</div>
+    <div id="transcript-area">Presiona abajo para traducir</div>
 
     <button id="main-btn" onclick="toggleRecognition()">HABLAR AHORA</button>
 
@@ -106,12 +106,12 @@
                 isRecording = false;
                 mainBtn.innerText = "HABLAR AHORA";
                 mainBtn.classList.remove('recording');
-                transcriptArea.innerText = "Error al escuchar.";
+                transcriptArea.innerText = "No se ha detectado voz.";
             };
         }
 
         function toggleRecognition() {
-            if (!recognition) return alert("Usa Chrome");
+            if (!recognition) return alert("Usa Google Chrome");
             if (isRecording) { recognition.stop(); } 
             else { recognition.start(); }
         }
