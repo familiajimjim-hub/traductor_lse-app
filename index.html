@@ -4,70 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traductor LSE</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
     <style>
         body {
-            margin: 0; height: 100vh; display: flex; flex-direction: column; 
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; background: #ffffff;
-            font-family: sans-serif; position: relative;
+            font-family: 'DM Serif Display', serif; position: relative; overflow: hidden;
         }
-        h1 { color: #000; font-size: 2rem; margin-bottom: 20px; }
+        /* MANTENEMOS LAS ACUARELAS ORIGINALES */
+        body::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 10% 10%, rgba(162,217,255,0.4), transparent 40%),
+                        radial-gradient(circle at 90% 90%, rgba(255,194,224,0.4), transparent 40%);
+            z-index: -1;
+        }
+        
+        /* TÍTULO Y SUBTÍTULO EN AZUL OSCURO/NEGRO */
+        h1 { color: #1a252f; font-size: 2.8rem; margin: 10px 0; font-weight: bold; }
+        .subtitle { color: #333333; font-size: 1.1rem; margin-bottom: 25px; font-style: italic; }
+
         #video-viewport { 
-            width: 300px; height: 300px; background: #000; border-radius: 20px; 
-            overflow: hidden; margin-bottom: 20px; border: 5px solid #eee;
+            width: 320px; height: 320px; background: #000; border-radius: 25px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; 
+            margin-bottom: 20px; border: 4px solid #fff;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
-        #transcript-area { color: #000; font-weight: bold; font-size: 1.2rem; margin-bottom: 20px; min-height: 1.2em; }
-        #start-btn {
-            background: #004488; color: white; border: none; padding: 15px 30px;
-            border-radius: 50px; cursor: pointer; font-size: 1.2rem; font-weight: bold;
+        
+        #transcript-area { 
+            color: #000000; font-size: 1.4rem; font-weight: bold;
+            margin-bottom: 30px; text-align: center; min-height: 1.5em; width: 85%;
         }
+        
+        /* BOTÓN EN AZUL OSCURO (ORIGINAL) */
+        #main-btn {
+            background: #2c3e50; color: white; border: none; padding: 18px 45px;
+            border-radius: 50px; cursor: pointer; font-size: 1.1rem; font-weight: bold;
+            letter-spacing: 1px; box-shadow: 0 8px 15px rgba(0,0,0,0.3); transition: 0.3s;
+        }
+        #main-btn.recording { background: #c0392b; }
+        #main-btn:hover { background: #000000; transform: scale(1.05); }
+
+        /* ESTILOS PARA LOS LOGOS EN LAS ESQUINAS */
+        .corner-logo {
+            position: absolute; bottom: 20px; width: 60px; height: 60px;
+            object-fit: contain; opacity: 0.8; z-index: 10;
+        }
+        .left-logo { left: 20px; }
+        .right-logo { right: 20px; }
     </style>
 </head>
 <body>
-    <h1>TRADUCTOR LSE</h1>
-    <div id="video-viewport"><video id="lse-video" playsinline muted></video></div>
-    <div id="transcript-area">Toca abajo para hablar</div>
-    <button id="start-btn" onclick="startRecognition()">HABLAR AHORA</button>
+
+    <h1>De Voz a Signos</h1>
+    <div class="subtitle">Traductor LSE Personalizado</div>
+    
+    <div id="video-viewport">
+        <video id="lse-video" playsinline muted></video>
+    </div>
+
+    <div id="transcript-area">Presiona abajo para traducir</div>
+
+    <button id="main-btn" onclick="toggleRecognition()">HABLAR AHORA</button>
+
+    <img src="LSE/videos/2.png" alt="Logo LSE" class="corner-logo left-logo">
+    
+    <img src="LSE/videos/1.png" alt="Logo Colegio" class="corner-logo right-logo">
 
     <script>
         const videoPlayer = document.getElementById('lse-video');
         const transcriptArea = document.getElementById('transcript-area');
+        const mainBtn = document.getElementById('main-btn');
+        
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let isRecording = false;
 
-        function startRecognition() {
-            if (!SpeechRecognition) return alert("Usa Google Chrome");
-            const recognition = new SpeechRecognition();
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
             recognition.lang = 'es-ES';
-            recognition.onstart = () => transcriptArea.innerText = "Escuchando...";
-            recognition.onresult = (e) => {
-                const text = e.results[0][0].transcript.toLowerCase().trim();
-                transcriptArea.innerText = 'Has dicho: ' + text;
+            recognition.continuous = false; // Detiene la escucha automáticamente tras una frase
+
+            recognition.onstart = () => {
+                isRecording = true;
+                mainBtn.innerText = "DETENER";
+                mainBtn.classList.add('recording');
+                transcriptArea.innerText = "Escuchando...";
+            };
+
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript.toLowerCase().trim();
+                transcriptArea.innerText = 'Has dicho: "' + text + '"';
                 processText(text);
             };
-            recognition.start();
+
+            recognition.onend = () => {
+                isRecording = false;
+                mainBtn.innerText = "HABLAR AHORA";
+                mainBtn.classList.remove('recording');
+            };
+
+            recognition.onerror = () => {
+                transcriptArea.innerText = "Error al escuchar. Inténtalo de nuevo.";
+                isRecording = false;
+                mainBtn.innerText = "HABLAR AHORA";
+                mainBtn.classList.remove('recording');
+            };
+        }
+
+        function toggleRecognition() {
+            if (!recognition) return alert("Navegador no compatible. Usa Google Chrome.");
+            
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
         }
 
         async function processText(text) {
             const palabrasGrabadas = ["hola", "adios", "gracias"];
             if (palabrasGrabadas.includes(text)) {
                 // Ruta corregida a LSE/videos/
-                await playVideo(`LSE/videos/${text}.mov`);
-            } else {
-                const letras = text.replace(/\s/g, "").split("");
-                for (let letra of letras) {
-                    await playVideo(`LSE/videos/${letra}.mov`);
-                }
-            }
-        }
-
-        function playVideo(src) {
-            return new Promise(resolve => {
-                videoPlayer.src = src;
-                videoPlayer.onended = resolve;
-                videoPlayer.onerror = resolve;
-                videoPlayer.play().catch(resolve);
-            });
-        }
-    </script>
-</body>
-</html>
+                await
