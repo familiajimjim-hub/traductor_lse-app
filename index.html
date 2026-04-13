@@ -34,7 +34,6 @@
             margin-bottom: 30px; text-align: center; min-height: 1.5em; width: 85%;
         }
         
-        /* BOTÓN DINÁMICO */
         #main-btn {
             background: #2c3e50; color: white; border: none; padding: 20px 55px;
             border-radius: 50px; cursor: pointer; font-size: 1.2rem; font-weight: bold;
@@ -42,15 +41,6 @@
             font-family: sans-serif; z-index: 20;
         }
         #main-btn.recording { background: #e74c3c; transform: scale(1.05); }
-        #main-btn:active { transform: scale(0.95); }
-
-        /* LOGOS EN LAS ESQUINAS */
-        .corner-logo {
-            position: absolute; bottom: 25px; width: 90px; height: 90px;
-            object-fit: contain; z-index: 10;
-        }
-        .left-logo { left: 25px; } 
-        .right-logo { right: 25px; }
     </style>
 </head>
 <body>
@@ -66,54 +56,44 @@
 
     <button id="main-btn" onclick="toggleRecognition()">HABLAR AHORA</button>
 
-    <img src="LSE/videos/2.png" alt="Logo LSE" class="corner-logo left-logo">
-    <img src="LSE/videos/1.png" alt="Logo Colegio" class="corner-logo right-logo">
-
     <script>
         const videoPlayer = document.getElementById('lse-video');
         const transcriptArea = document.getElementById('transcript-area');
         const mainBtn = document.getElementById('main-btn');
-        
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition;
         let isRecording = false;
 
+        // Quita tildes para que 'qué' se lea como 'que' o letra 'e'
+        function limpiarTexto(texto) {
+            return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'es-ES';
-            recognition.continuous = false;
-
             recognition.onstart = () => {
                 isRecording = true;
                 mainBtn.innerText = "DETENER";
                 mainBtn.classList.add('recording');
                 transcriptArea.innerText = "Escuchando...";
             };
-
             recognition.onresult = (event) => {
-                const text = event.results[0][0].transcript.toLowerCase().trim();
-                transcriptArea.innerText = '"' + text + '"';
-                processText(text);
+                const originalText = event.results[0][0].transcript.toLowerCase().trim();
+                const textoLimpio = limpiarTexto(originalText);
+                transcriptArea.innerText = '"' + originalText + '"';
+                processText(textoLimpio);
             };
-
             recognition.onend = () => {
                 isRecording = false;
                 mainBtn.innerText = "HABLAR AHORA";
                 mainBtn.classList.remove('recording');
             };
-
-            recognition.onerror = () => {
-                isRecording = false;
-                mainBtn.innerText = "HABLAR AHORA";
-                mainBtn.classList.remove('recording');
-                transcriptArea.innerText = "No se ha detectado voz.";
-            };
         }
 
         function toggleRecognition() {
             if (!recognition) return alert("Usa Google Chrome");
-            if (isRecording) { recognition.stop(); } 
-            else { recognition.start(); }
+            isRecording ? recognition.stop() : recognition.start();
         }
 
         async function processText(text) {
