@@ -11,7 +11,7 @@
             align-items: center; justify-content: center; background: #ffffff;
             font-family: 'DM Serif Display', serif; position: relative; overflow: hidden;
         }
-        /* MANTENEMOS LAS ACUARELAS ORIGINALES */
+        /* ESTÉTICA DE ACUARELAS */
         body::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 10% 10%, rgba(162,217,255,0.4), transparent 40%),
@@ -19,9 +19,8 @@
             z-index: -1;
         }
         
-        /* TÍTULO Y SUBTÍTULO EN AZUL OSCURO/NEGRO */
         h1 { color: #1a252f; font-size: 2.8rem; margin: 10px 0; font-weight: bold; }
-        .subtitle { color: #333333; font-size: 1.1rem; margin-bottom: 25px; font-style: italic; }
+        .subtitle { color: #333333; font-size: 1.1rem; margin-bottom: 25px; font-style: italic; font-family: sans-serif; }
 
         #video-viewport { 
             width: 320px; height: 320px; background: #000; border-radius: 25px; 
@@ -31,26 +30,27 @@
         video { width: 100%; height: 100%; object-fit: cover; }
         
         #transcript-area { 
-            color: #000000; font-size: 1.4rem; font-weight: bold;
+            color: #000; font-size: 1.4rem; font-weight: bold; font-family: sans-serif;
             margin-bottom: 30px; text-align: center; min-height: 1.5em; width: 85%;
         }
         
-        /* BOTÓN EN AZUL OSCURO (ORIGINAL) */
+        /* BOTÓN DE CONTROL */
         #main-btn {
             background: #2c3e50; color: white; border: none; padding: 18px 45px;
             border-radius: 50px; cursor: pointer; font-size: 1.1rem; font-weight: bold;
             letter-spacing: 1px; box-shadow: 0 8px 15px rgba(0,0,0,0.3); transition: 0.3s;
+            font-family: sans-serif;
         }
-        #main-btn.recording { background: #c0392b; }
-        #main-btn:hover { background: #000000; transform: scale(1.05); }
+        #main-btn.recording { background: #c0392b; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
-        /* ESTILOS PARA LOS LOGOS EN LAS ESQUINAS */
+        /* LOGOS EN LAS ESQUINAS */
         .corner-logo {
-            position: absolute; bottom: 20px; width: 60px; height: 60px;
-            object-fit: contain; opacity: 0.8; z-index: 10;
+            position: absolute; bottom: 20px; width: 80px; height: auto;
+            object-fit: contain; z-index: 10; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));
         }
-        .left-logo { left: 20px; }
-        .right-logo { right: 20px; }
+        .left-logo { left: 20px; } /* Logo LSE (2.png) */
+        .right-logo { right: 20px; } /* Logo Colegio (1.png) */
     </style>
 </head>
 <body>
@@ -62,12 +62,11 @@
         <video id="lse-video" playsinline muted></video>
     </div>
 
-    <div id="transcript-area">Presiona abajo para traducir</div>
+    <div id="transcript-area">Toca para traducir</div>
 
     <button id="main-btn" onclick="toggleRecognition()">HABLAR AHORA</button>
 
     <img src="LSE/videos/2.png" alt="Logo LSE" class="corner-logo left-logo">
-    
     <img src="LSE/videos/1.png" alt="Logo Colegio" class="corner-logo right-logo">
 
     <script>
@@ -82,7 +81,7 @@
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'es-ES';
-            recognition.continuous = false; // Detiene la escucha automáticamente tras una frase
+            recognition.continuous = false;
 
             recognition.onstart = () => {
                 isRecording = true;
@@ -93,7 +92,7 @@
 
             recognition.onresult = (event) => {
                 const text = event.results[0][0].transcript.toLowerCase().trim();
-                transcriptArea.innerText = 'Has dicho: "' + text + '"';
+                transcriptArea.innerText = '"' + text + '"';
                 processText(text);
             };
 
@@ -104,25 +103,39 @@
             };
 
             recognition.onerror = () => {
-                transcriptArea.innerText = "Error al escuchar. Inténtalo de nuevo.";
                 isRecording = false;
                 mainBtn.innerText = "HABLAR AHORA";
                 mainBtn.classList.remove('recording');
+                transcriptArea.innerText = "Error al escuchar.";
             };
         }
 
         function toggleRecognition() {
-            if (!recognition) return alert("Navegador no compatible. Usa Google Chrome.");
-            
-            if (isRecording) {
-                recognition.stop();
-            } else {
-                recognition.start();
-            }
+            if (!recognition) return alert("Usa Chrome");
+            if (isRecording) { recognition.stop(); } 
+            else { recognition.start(); }
         }
 
         async function processText(text) {
-            const palabrasGrabadas = ["hola", "adios", "gracias"];
-            if (palabrasGrabadas.includes(text)) {
-                // Ruta corregida a LSE/videos/
-                await
+            const palabras = ["hola", "adios", "gracias"];
+            if (palabras.includes(text)) {
+                await playVideo(`LSE/videos/${text}.mov`);
+            } else {
+                const letras = text.replace(/\s/g, "").split("");
+                for (let letra of letras) {
+                    await playVideo(`LSE/videos/${letra}.mov`);
+                }
+            }
+        }
+
+        function playVideo(src) {
+            return new Promise((resolve) => {
+                videoPlayer.src = src;
+                videoPlayer.onended = resolve;
+                videoPlayer.onerror = resolve;
+                videoPlayer.play().catch(resolve);
+            });
+        }
+    </script>
+</body>
+</html>
