@@ -11,29 +11,24 @@
             align-items: center; justify-content: center; background: #ffffff;
             font-family: 'DM Serif Display', serif; position: relative; overflow: hidden;
         }
-        /* ACUARELAS DE FONDO */
         body::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 10% 10%, rgba(162,217,255,0.4), transparent 45%),
                         radial-gradient(circle at 90% 90%, rgba(255,194,224,0.4), transparent 45%);
             z-index: -1;
         }
-        
         h1 { color: #1a252f; font-size: 3rem; margin: 10px 0; font-weight: bold; }
         .subtitle { color: #444; font-size: 1.1rem; margin-bottom: 25px; font-style: italic; font-family: sans-serif; }
-
         #video-viewport { 
             width: 320px; height: 320px; background: #000; border-radius: 30px; 
             box-shadow: 0 20px 40px rgba(0,0,0,0.3); overflow: hidden; 
             margin-bottom: 20px; border: 5px solid #fff;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
         #transcript-area { 
             color: #1a252f; font-size: 1.4rem; font-weight: bold; font-family: sans-serif;
             margin-bottom: 30px; text-align: center; min-height: 1.5em; width: 85%;
         }
-        
         #main-btn {
             background: #2c3e50; color: white; border: none; padding: 20px 55px;
             border-radius: 50px; cursor: pointer; font-size: 1.2rem; font-weight: bold;
@@ -60,11 +55,10 @@
         const videoPlayer = document.getElementById('lse-video');
         const transcriptArea = document.getElementById('transcript-area');
         const mainBtn = document.getElementById('main-btn');
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
         let recognition;
         let isRecording = false;
 
-        // Quita tildes para que 'qué' se lea como 'que' o letra 'e'
         function limpiarTexto(texto) {
             return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
@@ -96,14 +90,34 @@
             isRecording ? recognition.stop() : recognition.start();
         }
 
+        // Esta función descarga los vídeos en segundo plano para que no tarden
+        function precargarVideo(url) {
+            return new Promise((resolve) => {
+                const link = document.createElement('link');
+                link.rel = 'preload';
+                link.as = 'video';
+                link.href = url;
+                link.onload = resolve;
+                link.onerror = resolve;
+                document.head.appendChild(link);
+            });
+        }
+
         async function processText(text) {
-            const palabras = ["hola", "adios", "gracias"];
-            if (palabras.includes(text)) {
+            const palabrasGrabadas = ["hola", "adios", "gracias"];
+            
+            if (palabrasGrabadas.includes(text)) {
                 await playVideo(`LSE/videos/${text}.mov`);
             } else {
                 const letras = text.replace(/\s/g, "").split("");
-                for (let letra of letras) {
-                    await playVideo(`LSE/videos/${letra}.mov`);
+                
+                // PRECARGA: Pedimos todos los vídeos a la vez antes de empezar
+                const rutas = letras.map(l => `LSE/videos/${l}.mov`);
+                await Promise.all(rutas.map(r => precargarVideo(r)));
+
+                // REPRODUCCIÓN: Ahora irán mucho más rápido
+                for (let ruta of rutas) {
+                    await playVideo(ruta);
                 }
             }
         }
@@ -112,7 +126,7 @@
             return new Promise((resolve) => {
                 videoPlayer.src = src;
                 videoPlayer.onended = resolve;
-                videoPlayer.onerror = resolve;
+                videoPlayer.onerror = resolve; 
                 videoPlayer.play().catch(resolve);
             });
         }
