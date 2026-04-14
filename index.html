@@ -32,10 +32,9 @@
         #main-btn {
             background: #2c3e50; color: white; border: none; padding: 20px 55px;
             border-radius: 50px; cursor: pointer; font-size: 1.2rem; font-weight: bold;
-            letter-spacing: 1px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s;
-            font-family: sans-serif; z-index: 20;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; font-family: sans-serif;
         }
-        #main-btn.recording { background: #e74c3c; transform: scale(1.05); }
+        #main-btn.recording { background: #e74c3c; }
     </style>
 </head>
 <body>
@@ -44,10 +43,10 @@
     <div class="subtitle">Traductor LSE Personalizado</div>
     
     <div id="video-viewport">
-        <video id="lse-video" playsinline muted></video>
+        <video id="lse-video" playsinline muted preload="auto"></video>
     </div>
 
-    <div id="transcript-area">Presiona abajo para traducir</div>
+    <div id="transcript-area">Toca para hablar</div>
 
     <button id="main-btn" onclick="toggleRecognition()">HABLAR AHORA</button>
 
@@ -73,10 +72,10 @@
                 transcriptArea.innerText = "Escuchando...";
             };
             recognition.onresult = (event) => {
-                const originalText = event.results[0][0].transcript.toLowerCase().trim();
-                const textoLimpio = limpiarTexto(originalText);
-                transcriptArea.innerText = '"' + originalText + '"';
-                processText(textoLimpio);
+                const text = event.results[0][0].transcript.toLowerCase().trim();
+                const limpio = limpiarTexto(text);
+                transcriptArea.innerText = '"' + text + '"';
+                processText(limpio);
             };
             recognition.onend = () => {
                 isRecording = false;
@@ -86,17 +85,17 @@
         }
 
         function toggleRecognition() {
-            if (!recognition) return alert("Usa Google Chrome");
+            if (!recognition) return alert("Usa Chrome");
             isRecording ? recognition.stop() : recognition.start();
         }
 
         async function processText(text) {
-            const palabrasGrabadas = ["hola", "adios", "gracias"];
-            if (palabrasGrabadas.includes(text)) {
+            const palabras = ["hola", "adios", "gracias"];
+            if (palabras.includes(text)) {
                 await playVideo(`LSE/videos/${text}.mov`);
             } else {
                 const letras = text.replace(/\s/g, "").split("");
-                for (let letra of letras) {
+                for (const letra of letras) {
                     await playVideo(`LSE/videos/${letra}.mov`);
                 }
             }
@@ -105,10 +104,9 @@
         function playVideo(src) {
             return new Promise((resolve) => {
                 videoPlayer.src = src;
-                videoPlayer.load(); // Fuerza al navegador a cargar el nuevo vídeo inmediatamente
                 videoPlayer.onended = resolve;
                 videoPlayer.onerror = resolve; 
-                videoPlayer.play().catch(resolve);
+                videoPlayer.play().catch(() => resolve());
             });
         }
     </script>
