@@ -90,34 +90,14 @@
             isRecording ? recognition.stop() : recognition.start();
         }
 
-        // Esta función descarga los vídeos en segundo plano para que no tarden
-        function precargarVideo(url) {
-            return new Promise((resolve) => {
-                const link = document.createElement('link');
-                link.rel = 'preload';
-                link.as = 'video';
-                link.href = url;
-                link.onload = resolve;
-                link.onerror = resolve;
-                document.head.appendChild(link);
-            });
-        }
-
         async function processText(text) {
             const palabrasGrabadas = ["hola", "adios", "gracias"];
-            
             if (palabrasGrabadas.includes(text)) {
                 await playVideo(`LSE/videos/${text}.mov`);
             } else {
                 const letras = text.replace(/\s/g, "").split("");
-                
-                // PRECARGA: Pedimos todos los vídeos a la vez antes de empezar
-                const rutas = letras.map(l => `LSE/videos/${l}.mov`);
-                await Promise.all(rutas.map(r => precargarVideo(r)));
-
-                // REPRODUCCIÓN: Ahora irán mucho más rápido
-                for (let ruta of rutas) {
-                    await playVideo(ruta);
+                for (let letra of letras) {
+                    await playVideo(`LSE/videos/${letra}.mov`);
                 }
             }
         }
@@ -125,6 +105,7 @@
         function playVideo(src) {
             return new Promise((resolve) => {
                 videoPlayer.src = src;
+                videoPlayer.load(); // Fuerza al navegador a cargar el nuevo vídeo inmediatamente
                 videoPlayer.onended = resolve;
                 videoPlayer.onerror = resolve; 
                 videoPlayer.play().catch(resolve);
