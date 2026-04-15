@@ -11,7 +11,7 @@
             align-items: center; justify-content: center; background: #ffffff;
             font-family: 'DM Serif Display', serif; position: relative; overflow: hidden;
         }
-        /* ACUARELAS DE FONDO */
+        /* ESTÉTICA ORIGINAL DE ACUARELAS */
         body::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 10% 10%, rgba(162,217,255,0.4), transparent 45%),
@@ -60,11 +60,11 @@
         const videoPlayer = document.getElementById('lse-video');
         const transcriptArea = document.getElementById('transcript-area');
         const mainBtn = document.getElementById('main-btn');
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
         let recognition;
         let isRecording = false;
 
-        // Quita tildes para que 'qué' se lea como 'que' o letra 'e'
+        // Limpieza de tildes (é -> e)
         function limpiarTexto(texto) {
             return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
@@ -72,18 +72,22 @@
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'es-ES';
+            recognition.continuous = false;
+
             recognition.onstart = () => {
                 isRecording = true;
                 mainBtn.innerText = "DETENER";
                 mainBtn.classList.add('recording');
                 transcriptArea.innerText = "Escuchando...";
             };
+
             recognition.onresult = (event) => {
-                const originalText = event.results[0][0].transcript.toLowerCase().trim();
-                const textoLimpio = limpiarTexto(originalText);
-                transcriptArea.innerText = '"' + originalText + '"';
-                processText(textoLimpio);
+                const text = event.results[0][0].transcript.toLowerCase().trim();
+                const limpio = limpiarTexto(text);
+                transcriptArea.innerText = '"' + text + '"';
+                processText(limpio);
             };
+
             recognition.onend = () => {
                 isRecording = false;
                 mainBtn.innerText = "HABLAR AHORA";
@@ -92,18 +96,23 @@
         }
 
         function toggleRecognition() {
-            if (!recognition) return alert("Usa Google Chrome");
+            if (!recognition) return alert("Usa Chrome");
             isRecording ? recognition.stop() : recognition.start();
         }
 
         async function processText(text) {
-            const palabras = ["hola", "adios", "gracias"];
-            if (palabras.includes(text)) {
-                await playVideo(`LSE/videos/${text}.mov`);
-            } else {
-                const letras = text.replace(/\s/g, "").split("");
-                for (let letra of letras) {
-                    await playVideo(`LSE/videos/${letra}.mov`);
+            const palabrasGrabadas = ["hola", "adios", "gracias"];
+            // Dividimos el texto en palabras individuales
+            const listaPalabras = text.split(/\s+/);
+
+            for (let palabra de listaPalabras) {
+                if (palabrasGrabadas.includes(palabra)) {
+                    await playVideo(`LSE/videos/${palabra}.mov`);
+                } else {
+                    const letras = palabra.split("");
+                    for (const letra de letras) {
+                        await playVideo(`LSE/videos/${letra}.mov`);
+                    }
                 }
             }
         }
@@ -111,9 +120,20 @@
         function playVideo(src) {
             return new Promise((resolve) => {
                 videoPlayer.src = src;
-                videoPlayer.onended = resolve;
-                videoPlayer.onerror = resolve;
-                videoPlayer.play().catch(resolve);
+                // Importante: removemos listeners previos para evitar que se pille
+                videoPlayer.onended = null;
+                videoPlayer.onerror = null;
+
+                videoPlayer.onended = () => resolve();
+                videoPlayer.onerror = () => {
+                    console.log("No existe el archivo:", src);
+                    resolve();
+                };
+
+                videoPlayer.play().catch(err => {
+                    console.log("Error reproducción:", err);
+                    resolve();
+                });
             });
         }
     </script>
